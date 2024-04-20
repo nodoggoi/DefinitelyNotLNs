@@ -26,7 +26,7 @@ class NeoSekaiScraper {
             const $el = $(el);
 
             const thumb = $el.find("img").attr("src");
-            const title = $el.find("h3.h5").text().replaceAll(/[\n\t]/g, "").trim();
+            const title = $el.find("h3.h5").text().replaceAll(/[\n\t]/g, "").trim().replaceAll(/^(HOT|NEW) */g, "");
             const url = $el.find("h3 > a").attr("href");
 
             const path = url.replace(NEOSEKAI_BASE_URL + "/novel", "").replaceAll("/", "");
@@ -44,7 +44,7 @@ class NeoSekaiScraper {
     /**
      * Returns the list of chapters for a given novel.
      * @param {string} novelPath 
-     * @returns {Promise<{title: string, url: string}>}
+     * @returns {Promise<{title: string, url: string, number: number}>}
      */
     async getChapterList(novelPath) {
         const $ = await this.instance({url: `novel/${novelPath}`}).then(res => cheerio.load(res.data));
