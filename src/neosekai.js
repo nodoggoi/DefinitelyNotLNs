@@ -1,10 +1,11 @@
 const axios = require("axios");
 const cheerio = require("cheerio");
 
-const { sleep } = require("./util");
-
 const NEOSEKAI_BASE_URL = "https://www.neosekaitranslations.com";
 
+/**
+ * Scraper for [NeoSekai translations](https://www.neosekaitranslations.com/).
+ */
 class NeoSekaiScraper {
     constructor() {
         this.instance = axios.create({
@@ -13,6 +14,9 @@ class NeoSekaiScraper {
         });
     }
 
+    /**
+     * @returns {Promise<{title: string, path: string, thumb: string}[]>}
+     */
     async getNovelList() {
         const $ = await this.instance({url: "novel"}).then(res => cheerio.load(res.data));
 
