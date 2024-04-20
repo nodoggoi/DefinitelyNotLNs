@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-const readline = require('readline')
+const readline = require('readline');
 
-const yargs = require('yargs/yargs')
-const { hideBin } = require('yargs/helpers')
+const yargs = require('yargs/yargs');
+const { hideBin } = require('yargs/helpers');
 
-const { NeoSekaiScraper } = require('../neosekai')
-const { joinChapterContent } = require('../util')
+const { NeoSekaiScraper } = require('../neosekai');
+const { joinChapterContent } = require('../util');
 
 yargs(hideBin(process.argv))
     .command(
@@ -23,26 +23,26 @@ yargs(hideBin(process.argv))
             },
         },
         async (argv) => {
-            if (argv.service !== 'neosekai') return console.log('Invalid service.')
+            if (argv.service !== 'neosekai') return console.log('Invalid service.');
 
-            const scraper = new NeoSekaiScraper()
+            const scraper = new NeoSekaiScraper();
 
-            const novelPath = argv.novel
+            const novelPath = argv.novel;
 
             if (!novelPath) {
-                const novels = await scraper.getNovelList()
-                printNovelList(novels)
-                return
+                const novels = await scraper.getNovelList();
+                printNovelList(novels);
+                return;
             }
 
-            const chapters = await scraper.getChapterList(novelPath)
+            const chapters = await scraper.getChapterList(novelPath);
 
             if (!chapters) {
-                console.log('Novel not found!')
-                return
+                console.log('Novel not found!');
+                return;
             }
 
-            printChapterList(chapters)
+            printChapterList(chapters);
         },
     )
     .command(
@@ -72,88 +72,88 @@ yargs(hideBin(process.argv))
             },
         },
         async (argv) => {
-            if (argv.service !== 'neosekai') return console.log('Invalid service.')
+            if (argv.service !== 'neosekai') return console.log('Invalid service.');
 
-            const scraper = new NeoSekaiScraper()
+            const scraper = new NeoSekaiScraper();
 
-            let { novel, chapter } = argv
+            let { novel, chapter } = argv;
 
             const rl = readline.createInterface({
                 input: process.stdin,
                 output: process.stdout,
-            })
+            });
 
             if (!novel) {
-                const novels = await scraper.getNovelList()
+                const novels = await scraper.getNovelList();
 
-                printNovelList(novels)
+                printNovelList(novels);
 
-                const answer = await question('Which novel do you want to read? ', rl)
-                let novelIndex = parseInt(answer) - 1
+                const answer = await question('Which novel do you want to read? ', rl);
+                let novelIndex = parseInt(answer) - 1;
 
                 if (isNaN(novelIndex)) {
-                    if (!answer) return console.log('Invalid input')
+                    if (!answer) return console.log('Invalid input');
 
-                    novelIndex = novels.findIndex((novel) => novel.path === answer)
+                    novelIndex = novels.findIndex((novel) => novel.path === answer);
                 }
 
-                if (novelIndex <= 0 || novelIndex >= novels.length) return console.log('Invalid index or path.')
+                if (novelIndex <= 0 || novelIndex >= novels.length) return console.log('Invalid index or path.');
 
-                novel = novels[novelIndex].path
+                novel = novels[novelIndex].path;
             }
 
             if (!chapter) {
-                const chapters = await scraper.getChapterList(novel)
+                const chapters = await scraper.getChapterList(novel);
 
                 if (argv.listReverse) {
-                    chapters.reverse()
+                    chapters.reverse();
                 }
 
-                printChapterList(chapters)
+                printChapterList(chapters);
 
-                const index = parseInt(await question('Which chapter do you want to read? ', rl))
+                const index = parseInt(await question('Which chapter do you want to read? ', rl));
 
-                const id = chapters[index - 1]?.id
+                const id = chapters[index - 1]?.id;
 
                 if (!id) {
-                    console.log('Invalid index')
-                    return
+                    console.log('Invalid index');
+                    return;
                 }
 
-                chapter = id
+                chapter = id;
             }
 
-            const content = await scraper.getChapterContent(novel, chapter)
+            const content = await scraper.getChapterContent(novel, chapter);
 
             if (!content) {
-                console.log('Chapter not found')
-                return
+                console.log('Chapter not found');
+                return;
             }
 
-            const text = joinChapterContent(content)
-            console.log(text)
+            const text = joinChapterContent(content);
+            console.log(text);
         },
     )
-    .parse()
+    .parse();
 
 function question(question, interface) {
     return new Promise((resolve) => {
-        interface.question(question, resolve)
-    })
+        interface.question(question, resolve);
+    });
 }
 
 function printNovelList(novels) {
-    let i = 1
+    let i = 1;
     for (const { title, path, thumb } of novels) {
-        console.log(`${i} - ${title} (${path})`)
-        i += 1
+        console.log(`${i} - ${title} (${path})`);
+        i += 1;
     }
 }
 
 function printChapterList(chapters) {
-    let i = 1
+    let i = 1;
     for (const { title, id } of chapters) {
-        console.log(`${i} - ${title} (${id})`)
-        i += 1
+        console.log(`${i} - ${title} (${id})`);
+        i += 1;
     }
 }

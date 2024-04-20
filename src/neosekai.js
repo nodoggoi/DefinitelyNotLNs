@@ -1,7 +1,7 @@
-const axios = require('axios')
-const cheerio = require('cheerio')
+const axios = require('axios');
+const cheerio = require('cheerio');
 
-const NEOSEKAI_BASE_URL = 'https://www.neosekaitranslations.com'
+const NEOSEKAI_BASE_URL = 'https://www.neosekaitranslations.com';
 
 /**
  * Scraper for [NeoSekai translations](https://www.neosekaitranslations.com/).
@@ -11,39 +11,39 @@ class NeoSekaiScraper {
         this.instance = axios.create({
             baseURL: NEOSEKAI_BASE_URL,
             withCredentials: true,
-        })
+        });
     }
 
     /**
      * @returns {Promise<{title: string, path: string, thumb: string}[]>}
      */
     async getNovelList() {
-        const $ = await this.instance({ url: 'novel' }).then((res) => cheerio.load(res.data))
+        const $ = await this.instance({ url: 'novel' }).then((res) => cheerio.load(res.data));
 
-        const novels = []
+        const novels = [];
 
         $('.page-item-detail.text').each((_, el) => {
-            const $el = $(el)
+            const $el = $(el);
 
-            const thumb = $el.find('img').attr('src')
+            const thumb = $el.find('img').attr('src');
             const title = $el
                 .find('h3.h5')
                 .text()
                 .replaceAll(/[\n\t]/g, '')
                 .trim()
-                .replaceAll(/^(HOT|NEW) */g, '')
-            const url = $el.find('h3 > a').attr('href')
+                .replaceAll(/^(HOT|NEW) */g, '');
+            const url = $el.find('h3 > a').attr('href');
 
-            const path = url.replace(NEOSEKAI_BASE_URL + '/novel', '').replaceAll('/', '')
+            const path = url.replace(NEOSEKAI_BASE_URL + '/novel', '').replaceAll('/', '');
 
             novels.push({
                 title,
                 path,
                 thumb,
-            })
-        })
+            });
+        });
 
-        return novels
+        return novels;
     }
 
     /**
@@ -52,15 +52,15 @@ class NeoSekaiScraper {
      * @returns {Promise<{title: string, url: string, id: string}>}
      */
     async getChapterList(novelPath) {
-        const $ = await this.instance({ url: `novel/${novelPath}` }).then((res) => cheerio.load(res.data))
+        const $ = await this.instance({ url: `novel/${novelPath}` }).then((res) => cheerio.load(res.data));
 
-        const $body = $('body')
+        const $body = $('body');
 
         const mangaId = $body
             .attr('class')
             .split(' ')
             .find((c) => c.startsWith('postid-'))
-            .replace('postid-', '')
+            .replace('postid-', '');
 
         const $chapterList = await this.instance({
             url: 'wp-admin/admin-ajax.php',
@@ -75,33 +75,33 @@ class NeoSekaiScraper {
                 Referrer: NEOSEKAI_BASE_URL + `/novel/${novelPath}`,
                 'X-Requested-With': 'XMLHttpRequest',
             },
-        }).then((res) => cheerio.load(res.data))
+        }).then((res) => cheerio.load(res.data));
 
-        const chapters = []
+        const chapters = [];
 
         $chapterList('li.wp-manga-chapter').each((i, el) => {
-            const $el = $(el)
+            const $el = $(el);
 
-            const $a = $el.find('a')
-            const fullTitle = $a.text()
+            const $a = $el.find('a');
+            const fullTitle = $a.text();
 
-            const title = fullTitle.replace(/Chapter [0-9]+ +\- +/, '').trim()
+            const title = fullTitle.replace(/Chapter [0-9]+ +\- +/, '').trim();
 
-            const url = $a.attr('href')
+            const url = $a.attr('href');
 
             const id = url
                 .split('/')
                 .filter((c) => !!c)
-                .pop()
+                .pop();
 
             chapters.push({
                 title,
                 url,
                 id,
-            })
-        })
+            });
+        });
 
-        return chapters
+        return chapters;
     }
 
     /**
@@ -113,31 +113,31 @@ class NeoSekaiScraper {
         try {
             const $ = await this.instance({ url: `novel/${novelPath}/${chapterPath}` }).then((res) =>
                 cheerio.load(res.data),
-            )
-            const content = []
+            );
+            const content = [];
 
             // p > span because the last paragraph contains a script to add a kofi button to the bottom, and we don't need that.
             $('.entry-content p > span').each((i, el) => {
-                const paragraph = $(el).text().trim()
+                const paragraph = $(el).text().trim();
 
                 if (paragraph.length > 0) {
-                    content.push(paragraph)
+                    content.push(paragraph);
                 }
-            })
+            });
 
             if (content.length == 0) {
-                return null
+                return null;
             }
 
-            return content
+            return content;
         } catch (error) {
             if (error instanceof axios.AxiosError && error.response.status == 404) {
-                return null
+                return null;
             }
 
-            throw error
+            throw error;
         }
     }
 }
 
-module.exports = { NeoSekaiScraper }
+module.exports = { NeoSekaiScraper };
