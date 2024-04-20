@@ -98,8 +98,8 @@ class NeoSekaiScraper {
             const $ = await this.instance({url: `novel/${novelPath}/${chapterPath}`}).then(res => cheerio.load(res.data));
             const content = [];
     
-            // FIXME: currently also includes a kofi widget.
-            $(".entry-content p").each((i, el) => {
+            // p > span because the last paragraph contains a script to add a kofi button to the bottom, and we don't need that.
+            $(".entry-content p > span").each((i, el) => {
                 const paragraph = $(el).text().trim();
     
                 if (paragraph.length > 0) {
