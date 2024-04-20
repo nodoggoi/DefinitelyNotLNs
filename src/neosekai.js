@@ -44,7 +44,7 @@ class NeoSekaiScraper {
     /**
      * Returns the list of chapters for a given novel.
      * @param {string} novelPath 
-     * @returns {Promise<{title: string, url: string, number: number}>}
+     * @returns {Promise<{title: string, url: string, id: string}>}
      */
     async getChapterList(novelPath) {
         const $ = await this.instance({url: `novel/${novelPath}`}).then(res => cheerio.load(res.data));
@@ -70,16 +70,19 @@ class NeoSekaiScraper {
             
             const $a = $el.find("a");
             const fullTitle = $a.text();
+
             const title = fullTitle.replace(/Chapter [0-9]+ +\- +/, "").trim();
 
             const url = $a.attr("href");
-            const chapterNumber = parseInt(url.match(/chapter-([0-9]+)/)[1]);
 
+            const id = url.split("/").filter(c => !!c).pop();
+            
             chapters.push({
                 title,
                 url,
-                number: chapterNumber
+                id,
             });
+            
         });
 
         return chapters;
@@ -90,11 +93,12 @@ class NeoSekaiScraper {
      * @param {number} chapter
      * @returns {Promise<string[] | null>} The chapter's paragraphs, or null if the chapter doesn't exist.
      */
-    async getChapterContent(novelPath, chapter) {
+    async getChapterContent(novelPath, chapterPath) {
         try {
-            const $ = await this.instance({url: `novel/${novelPath}/chapter-${chapter}`}).then(res => cheerio.load(res.data));
+            const $ = await this.instance({url: `novel/${novelPath}/${chapterPath}`}).then(res => cheerio.load(res.data));
             const content = [];
     
+            // FIXME: currently also includes a kofi widget.
             $(".entry-content p").each((i, el) => {
                 const paragraph = $(el).text().trim();
     
