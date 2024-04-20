@@ -8,19 +8,53 @@ const { NeoSekaiScraper } = require("../neosekai");
 const { joinChapterContent } = require("../util");
 
 yargs(hideBin(process.argv))
-    .command("list", "List all novels", {}, async (argv) => {
-        const novels = await new NeoSekaiScraper().getNovelList();
+    .command("list <service> [novel]", "List things!", {
+        service: {
+            type: "string",
+            describe: "The service to list.",
+            demandOption: true,
+        },
+        novel: {
+            type: "string",
+            describe: "The novel to list chapters of. If not specified, lists all novels instead."
+        }
+    }, async (argv) => {
+        if (argv.service !== "neosekai") return console.log("Invalid service.");
 
-        printNovelList(novels);
+        const scraper = new NeoSekaiScraper();
+        
+        const novelPath = argv.novel;
+
+        if (!novelPath) {
+            const novels = await scraper.getNovelList();
+            printNovelList(novels);
+            return;
+        }
+
+        const chapters = await scraper.getChapterList(novelPath);
+
+        if (!chapters) {
+            console.log("Novel not found!");
+            return;
+        }
+
+        printChapterList(chapters);
+
+
     })
-    .command("read [novel] [chapter]", "Read a novel", {
+    .command("read <service> [novel] [chapter]", "Read a novel", {
+        service: {
+            type: "string",
+            describe: "The service to read from. Currently only supports 'neosekai'.",
+            demandOption: true,
+        },
         novel: {
             type: "string",
             demandOption: false,
             describe: "The novel to read. If not specified, you will be prompted to select one. This should be the path of the novel as seen in the adressbar of the website, not the title."
         },
         chapter: {
-            type: "number",
+            type: "string",
             demandOption: false
         },
         listReverse: {
@@ -30,6 +64,8 @@ yargs(hideBin(process.argv))
             describe: "Reverse the order of the chapters. Lists the older chapters first."
         }
     }, async (argv) => {
+        if (argv.service !== "neosekai") return console.log("Invalid service.");
+
         const scraper = new NeoSekaiScraper();
 
         let {novel, chapter} = argv;
@@ -44,12 +80,16 @@ yargs(hideBin(process.argv))
 
             printNovelList(novels);
 
-            const novelIndex = parseInt(await question("Which novel do you want to read? ", rl)) - 1;
+            const answer = await question("Which novel do you want to read? ", rl)
+            let novelIndex = parseInt(answer) - 1;
 
-            if (isNaN(novelIndex) || novelIndex < 0 || novelIndex >= novels.length) {
-                console.log("Invalid index");
-                return;
+            if (isNaN(novelIndex)) {
+                if (!answer) return console.log("Invalid input");
+
+                novelIndex = novels.findIndex(novel => novel.path === answer);
             }
+
+            if (novelIndex <= 0 || novelIndex >= novels.length) return console.log("Invalid index or path.");
 
             novel = novels[novelIndex].path;
         }
@@ -63,17 +103,16 @@ yargs(hideBin(process.argv))
 
             printChapterList(chapters);
 
-            const chapterNumber = parseInt(await question("Which chapter do you want to read? ", rl));
+            const index = parseInt(await question("Which chapter do you want to read? ", rl));
 
-            const maxChapter = Math.max(chapters[chapters.length - 1].number, chapters[0].number);
-            const minChapter = Math.min(chapters[0].number, chapters[chapters.length - 1].number);
+            const id = chapters[index - 1]?.id;
 
-            if (isNaN(chapterNumber) || chapterNumber < minChapter || chapterNumber >= maxChapter) {
+            if (!id) {
                 console.log("Invalid index");
                 return;
             }
 
-            chapter = chapterNumber;
+            chapter = id;
         }
 
         const content = await scraper.getChapterContent(novel, chapter);
@@ -84,8 +123,6 @@ yargs(hideBin(process.argv))
         }
 
         const text = joinChapterContent(content);
-
-        console.clear();
         console.log(text);
     })
     .parse();
@@ -105,7 +142,9 @@ function printNovelList(novels) {
 }
 
 function printChapterList(chapters) {
-    for (const {title, number} of chapters) {
-        console.log(`${number} - ${title}`);
+    let i = 1;
+    for (const {title, id} of chapters) {
+        console.log(`${i} - ${title} (${id})`);
+        i += 1;
     }
 }
