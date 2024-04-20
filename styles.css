@@ -1,12 +1,14 @@
 *{font-family: Lato}
-body {
-    background-color: rgb(53, 53, 53);
-}
 
 h1 {
     color: rgb(253, 253, 253);
 }
 
+body {
+    background-color: rgb(53, 53, 53);
+}
+
 p {
     color: rgb(255, 255, 255);
+    font-size: 14;
 }
