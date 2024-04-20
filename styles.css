@@ -1,4 +1,6 @@
-*{font-family: Lato}
+* {
+    font-family: Lato;
+}
 
 h1 {
     color: rgb(253, 253, 253);
@@ -13,26 +15,26 @@ p {
     font-size: 14;
 }
 
-a{
+a {
     text-decoration: none;
-    color:darkcyan
+    color: darkcyan;
 }
 
 a:visited {
-    color:darkcyan
+    color: darkcyan;
 }
 
 a:hover {
     text-decoration: underline;
-    color: darkcyan
+    color: darkcyan;
 }
 
 a:active {
-    color: cyan
+    color: cyan;
 }
 /*#(aka id) takes high priority
 while .(aka class) takes idk wat priorty just use #*/
 #home {
     font-size: xx-large;
-    color:white
+    color: white;
 }
