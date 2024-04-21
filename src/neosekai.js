@@ -47,13 +47,22 @@ class NeoSekaiScraper {
     }
 
     /**
-     * Returns the list of chapters for a given novel.
+     * Returns the list of chapters for a given novel, or null if the novel doesn't exist.
      * @param {string} novelPath
      * @returns {Promise<{title: string, url: string, id: string}>}
      */
     async getChapterList(novelPath) {
-        const $ = await this.instance({ url: `novel/${novelPath}` }).then((res) => cheerio.load(res.data));
+        let $;
 
+        try {
+            $ = await this.instance({ url: `novel/${novelPath}` }).then((res) => cheerio.load(res.data));
+        } catch (error) {
+            if (error instanceof axios.AxiosError && error.response.status == 404) {
+                return null;
+            }
+
+            throw error;
+        }
         const $body = $('body');
 
         const mangaId = $body

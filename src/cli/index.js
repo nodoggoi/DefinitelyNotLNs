@@ -21,6 +21,12 @@ yargs(hideBin(process.argv))
                 type: 'string',
                 describe: 'The novel to list chapters of. If not specified, lists all novels instead.',
             },
+            json: {
+                type: 'boolean',
+                demandOption: false,
+                default: false,
+                describe: 'Output the content as JSON.',
+            },
         },
         async (argv) => {
             if (argv.service !== 'neosekai') return console.log('Invalid service.');
@@ -31,18 +37,20 @@ yargs(hideBin(process.argv))
 
             if (!novelPath) {
                 const novels = await scraper.getNovelList();
-                printNovelList(novels);
+                printNovelList(novels, argv.json);
                 return;
             }
 
             const chapters = await scraper.getChapterList(novelPath);
 
             if (!chapters) {
+                if (argv.json) return console.log('[]');
+
                 console.log('Novel not found!');
                 return;
             }
 
-            printChapterList(chapters);
+            printChapterList(chapters, argv.json);
         },
     )
     .command(
@@ -142,7 +150,9 @@ function question(question, interface) {
     });
 }
 
-function printNovelList(novels) {
+function printNovelList(novels, json = false) {
+    if (json) return console.log(JSON.stringify(novels, null, 4));
+
     let i = 1;
     for (const { title, path, thumb } of novels) {
         console.log(`${i} - ${title} (${path})`);
@@ -150,7 +160,9 @@ function printNovelList(novels) {
     }
 }
 
-function printChapterList(chapters) {
+function printChapterList(chapters, json = false) {
+    if (json) return console.log(JSON.stringify(chapters, null, 4));
+
     let i = 1;
     for (const { title, id } of chapters) {
         console.log(`${i} - ${title} (${id})`);
