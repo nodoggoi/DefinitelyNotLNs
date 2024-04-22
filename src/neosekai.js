@@ -47,11 +47,11 @@ class NeoSekaiScraper {
     }
 
     /**
-     * Returns the list of chapters for a given novel, or null if the novel doesn't exist.
+     * Info about the specified novel, or null if the novel doesn't exist.
      * @param {string} novelPath
-     * @returns {Promise<{title: string, url: string, id: string}[]>}
+     * @returns {Promise<{chapters: {title: string, url: string, id: string}[], title: string, coverUrl: string}>}
      */
-    async getChapterList(novelPath) {
+    async getNovelInfo(novelPath) {
         let $;
 
         try {
@@ -63,6 +63,12 @@ class NeoSekaiScraper {
 
             throw error;
         }
+
+        const title = $('div.post-title > h1').text().trim().replaceAll('\n', '');
+        // we take the URL from data-src instead of src because the image is lazy loaded
+        const coverUrl = $('div.summary_image > a > img').attr('data-src');
+        if (!title || !coverUrl) return null;
+
         const $body = $('body');
 
         const mangaId = $body
@@ -113,7 +119,7 @@ class NeoSekaiScraper {
             });
         });
 
-        return chapters;
+        return { title, coverUrl, chapters };
     }
 
     /**
@@ -124,7 +130,6 @@ class NeoSekaiScraper {
     async getChapterContent(novelPath, chapterPath) {
         try {
             const path = `novel/${novelPath}/${chapterPath}`;
-            console.log('Fetching chapter content for', path);
 
             const $ = await this.instance({ url: path }).then((res) => cheerio.load(res.data));
 

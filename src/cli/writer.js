@@ -1,3 +1,4 @@
+const { default: axios } = require('axios');
 const { NeoSekaiScraper } = require('../neosekai');
 const { sleep } = require('../util');
 
@@ -40,15 +41,23 @@ class NovelWriter {
          * @type {Set<{id: string, path: string, title: string, url: string}>}
          */
         const writeChapters = new Set();
-        const listedChapters = await scraper.getChapterList(novelPath).then((chapters) => {
+        const {
+            chapters: listedChapters,
+            coverUrl,
+            title,
+        } = await scraper.getNovelInfo(novelPath).then(({ chapters, coverUrl, title }) => {
             if (options.includeChapters && options.includeChapters.length > 0) {
                 const includeChapters = new Set(options.includeChapters);
 
-                return chapters.filter(
-                    (chapter) => includeChapters.has(chapter.id) || includeChapters.has(chapter.path),
-                );
+                return {
+                    chapters: chapters.filter(
+                        (chapter) => includeChapters.has(chapter.id) || includeChapters.has(chapter.path),
+                    ),
+                    coverUrl,
+                    title,
+                };
             } else {
-                return chapters;
+                return { chapters, coverUrl, title };
             }
         });
 
@@ -66,6 +75,28 @@ class NovelWriter {
         }
 
         const writePromises = [];
+
+        writePromises.push(
+            fsPromises.writeFile(join(novelDir, 'info.json'), JSON.stringify({ coverUrl, title }, null, 4)),
+        );
+
+        writePromises.push(
+            axios
+                .get(coverUrl, {
+                    responseType: 'stream',
+                })
+                .then(
+                    (res) =>
+                        new Promise((resolve, reject) => {
+                            res.data.pipe(
+                                fs
+                                    .createWriteStream(join(novelDir, 'cover.jpg'))
+                                    .on('finish', resolve)
+                                    .on('error', reject),
+                            );
+                        }),
+                ),
+        );
 
         for (const { id, path, title } of writeChapters.values()) {
             const filePath = join(chapterDir, `${id}.json`);

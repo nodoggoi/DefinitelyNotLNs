@@ -42,7 +42,7 @@ yargs(hideBin(process.argv))
                 return;
             }
 
-            const chapters = await scraper.getChapterList(novelPath);
+            const { chapters } = await scraper.getNovelInfo(novelPath);
 
             if (!chapters) {
                 if (argv.json) return console.log('[]');
@@ -112,7 +112,7 @@ yargs(hideBin(process.argv))
             }
 
             if (!chapter) {
-                const chapters = await scraper.getChapterList(novel);
+                const { chapters } = await scraper.getNovelInfo(novel);
 
                 if (argv.listReverse) {
                     chapters.reverse();
@@ -177,7 +177,7 @@ yargs(hideBin(process.argv))
 
             await writer.writeAll(scraper, argv.novel, {
                 writeAll: argv.writeAll,
-                includeChapters: argv.chapters.map((c) => String(c)),
+                includeChapters: argv.chapters?.map((c) => String(c)),
             });
 
             console.log('Written successfully.');
