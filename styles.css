@@ -40,3 +40,10 @@ while .(aka class) takes idk wat priorty just use #*/
 .centered {
     text-align: center;
 }
+
+span {
+    color: rgb(253, 253, 253);
+    display: inline-block;
+    max-width: 600px; /* Adjust as needed */
+    text-overflow: ellipsis;
+  }
