@@ -6,6 +6,7 @@ const { hideBin } = require('yargs/helpers');
 
 const { NeoSekaiScraper } = require('../neosekai');
 const { joinChapterContent } = require('../util');
+const { NovelWriter } = require('./writer');
 
 yargs(hideBin(process.argv))
     .command(
@@ -140,6 +141,46 @@ yargs(hideBin(process.argv))
 
             const text = joinChapterContent(content);
             console.log(text);
+        },
+    )
+    .command(
+        'save <service> <novel> [chapters]',
+        'Save a novel for reading with the frontend.',
+        {
+            service: {
+                type: 'string',
+                demandOption: true,
+            },
+            novel: {
+                type: 'string',
+                demandOption: true,
+            },
+            chapters: {
+                type: 'array',
+                demandOption: false,
+            },
+            writeAll: {
+                type: 'boolean',
+                describe: 'Whether to write all chapters regardless of whether they already exist.',
+                default: false,
+            },
+            outDir: {
+                type: 'string',
+                describe: 'Where to write to. This is the _base_ dir, not the novel dir.',
+            },
+        },
+        async (argv) => {
+            if (argv.service !== 'neosekai') return console.log('Invalid service');
+            const scraper = new NeoSekaiScraper();
+
+            const writer = new NovelWriter(argv.outDir);
+
+            await writer.writeAll(scraper, argv.novel, {
+                writeAll: argv.writeAll,
+                includeChapters: argv.chapters.map((c) => String(c)),
+            });
+
+            console.log('Written successfully.');
         },
     )
     .parse();

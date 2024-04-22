@@ -49,7 +49,7 @@ class NeoSekaiScraper {
     /**
      * Returns the list of chapters for a given novel, or null if the novel doesn't exist.
      * @param {string} novelPath
-     * @returns {Promise<{title: string, url: string, id: string}>}
+     * @returns {Promise<{title: string, url: string, id: string}[]>}
      */
     async getChapterList(novelPath) {
         let $;
@@ -103,10 +103,13 @@ class NeoSekaiScraper {
                 .filter((c) => !!c)
                 .pop();
 
+            const path = url.replace(`${NEOSEKAI_BASE_URL}/novel/${novelPath}`, '').replaceAll(/^\/|\/$/g, '');
+
             chapters.push({
                 title,
                 url,
                 id,
+                path,
             });
         });
 
@@ -120,14 +123,19 @@ class NeoSekaiScraper {
      */
     async getChapterContent(novelPath, chapterPath) {
         try {
-            const $ = await this.instance({ url: `novel/${novelPath}/${chapterPath}` }).then((res) =>
-                cheerio.load(res.data),
-            );
+            const path = `novel/${novelPath}/${chapterPath}`;
+            console.log('Fetching chapter content for', path);
+
+            const $ = await this.instance({ url: path }).then((res) => cheerio.load(res.data));
+
+            $('script').remove();
+            $('style').remove();
+
             const content = [];
 
             // p > span because the last paragraph contains a script to add a kofi button to the bottom, and we don't need that.
-            $('.entry-content p > span').each((i, el) => {
-                const paragraph = $(el).text().trim();
+            $('.entry-content p ').each((i, el) => {
+                const paragraph = $(el).text().trim().replaceAll('\n', '');
 
                 if (paragraph.length > 0) {
                     content.push(paragraph);
