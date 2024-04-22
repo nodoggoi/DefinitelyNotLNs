@@ -47,3 +47,17 @@ span {
     max-width: 600px; /* Adjust as needed */
     text-overflow: ellipsis;
   }
+
+#title {
+    color: rgb(253, 253, 253);
+    display: inline-block;
+    max-width: 600px; /* Adjust as needed */
+    text-overflow: ellipsis;
+}
+
+#desc {
+    color: rgb(253, 253, 253);
+    display: inline-block;
+    max-width: 600px; /* Adjust as needed */
+    text-overflow: ellipsis;
+}
